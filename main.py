@@ -4,6 +4,9 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
+from call_function import available_functions
+from prompts import system_prompt
+
 load_dotenv()
 api_key = os.environ.get("GEMINI_API_KEY")
 client = genai.Client(api_key=api_key)
@@ -19,8 +22,15 @@ def main():
     args = parser.parse_args()
 
     messages = [types.Content(role="user", parts=[types.Part(text=args.user_prompt)])]
+    
 
-    response = client.models.generate_content(model=model, contents=messages)
+    response = client.models.generate_content(
+        model=model, 
+        contents=messages,
+        config=types.GenerateContentConfig(
+            tools=[available_functions], system_instruction=system_prompt
+        ),
+    )
     
     if response.usage_metadata == None:
         raise RunTimeError("no usage metadata returned")
@@ -29,7 +39,11 @@ def main():
         print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
         print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
 
-    print(f"Response:\n{response.text}")
+    if response.function_calls:
+        for function_call in response.function_calls:
+            print(f"Calling function: {function_call.name}({function_call.args})")
+    else:
+        print(response.text)
 
 if __name__ == "__main__":
     main()

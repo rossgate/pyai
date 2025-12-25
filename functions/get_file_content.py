@@ -1,7 +1,31 @@
 import os
 from config import *
 
+from google import genai
+from google.genai import types
+
+schema_get_file_content = types.FunctionDeclaration(
+    name="get_file_content",
+    description="Reads the contents of a file, up to 10000 characters",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        required=["file_path"],
+        properties={
+            "working_directory": types.Schema(
+                type=types.Type.STRING,
+                description="working directory to work from, default is current directory",
+            ),
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description="file path relative to the working directory."
+            )
+        },
+    ),
+)
+
 def get_file_content(working_directory, file_path):
+    if working_directory == None:
+        working_directory = "."
     try:
         working_dir_abs = os.path.abspath(working_directory)
         target_path = os.path.normpath(os.path.join(working_dir_abs, file_path))

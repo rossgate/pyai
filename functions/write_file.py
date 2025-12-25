@@ -1,6 +1,34 @@
 import os
+from google import genai
+from google.genai import types
+
+schema_write_file = types.FunctionDeclaration(
+    name="write_file",
+    description="Write or overwrite a file",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        required=["file_path","content"],
+        properties={
+            "working_directory": types.Schema(
+                type=types.Type.STRING,
+                description="Dworking directory to work from, default is current directory",
+            ),
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description="file path relative to the working directory."
+            ),
+            "content": types.Schema(
+                type=types.Type.STRING,
+                description="Content to write to file"
+            )
+        },
+    ),
+)
 
 def write_file(working_directory, file_path, content):
+    if working_directory == None:
+        working_directory = "."
+    
     try:
         working_dir_abs = os.path.abspath(working_directory)
         target_path = os.path.normpath(os.path.join(working_dir_abs, file_path))

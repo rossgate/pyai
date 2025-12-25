@@ -1,5 +1,22 @@
 import os, subprocess
 
+from google import genai
+from google.genai import types
+
+schema_run_python_file = types.FunctionDeclaration(
+    name="run_python_file",
+    description="Execute python files with optional arguments",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "directory": types.Schema(
+                type=types.Type.STRING,
+                description="Directory path to list files from, relative to the working directory (default is the working directory itself)",
+            ),
+        },
+    ),
+)
+
 def run_python_file(working_directory, file_path, args=None):
     try:
         working_dir_abs = os.path.abspath(working_directory)
@@ -11,8 +28,13 @@ def run_python_file(working_directory, file_path, args=None):
     if valid_target_dir == False:
         return f'   Error: Cannot execute "{file_path}" as it is outside the permitted working directory'
 
-    if not os.path.isfile(target_path):
+    if not os.path.exists(target_path) or not os.path.isfile(target_path):
+        return f'   Error: "{file_path}" does not exist or is not a regular file'
+
+    if not file_path.endswith('.py'):
         return f'   Error: "{file_path}" is not a Python file'
+
+    
 
     return_string = ""
     try:
@@ -20,11 +42,18 @@ def run_python_file(working_directory, file_path, args=None):
         if args != None:
             command.extend(args)
 
-        completed_process = subprocess.run(command, stdout=True, stderr=True, text=True, timeout=30)
-
+        completed_process = subprocess.run(
+            command, 
+            cwd=working_dir_abs,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, 
+            text=True, 
+            timeout=30
+            )
+      
         if completed_process.returncode != 0:
-            return f'Process exited with code X'
-        if completed_process.stdout == None and completed_process.stderr == None:
+            return f'Process exited with code {completed_process.returncode}'
+        if completed_process.stdout == None or completed_process.stderr == None:
             return f'No output produced'
         
         return_string += f'STDOUT: {completed_process.stdout}, STDERR: {completed_process.stderr}'
