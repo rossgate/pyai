@@ -1,4 +1,5 @@
 import os
+
 from google import genai
 from google.genai import types
 
@@ -11,7 +12,7 @@ schema_write_file = types.FunctionDeclaration(
         properties={
             "working_directory": types.Schema(
                 type=types.Type.STRING,
-                description="Dworking directory to work from, default is current directory",
+                description="Working directory to work from, default is current directory",
             ),
             "file_path": types.Schema(
                 type=types.Type.STRING,
@@ -28,7 +29,7 @@ schema_write_file = types.FunctionDeclaration(
 def write_file(working_directory, file_path, content):
     if working_directory == None:
         working_directory = "."
-    
+
     try:
         working_dir_abs = os.path.abspath(working_directory)
         target_path = os.path.normpath(os.path.join(working_dir_abs, file_path))
@@ -41,8 +42,6 @@ def write_file(working_directory, file_path, content):
 
     if os.path.isdir(target_path):
         return f'    Error: Cannot write to "{file_path}" as it is a directory'
-
-    
 
     try:
         os.makedirs(os.path.dirname(target_path), exist_ok=True)

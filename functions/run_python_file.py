@@ -8,16 +8,32 @@ schema_run_python_file = types.FunctionDeclaration(
     description="Execute python files with optional arguments",
     parameters=types.Schema(
         type=types.Type.OBJECT,
+        required=["working_directory","file_path"],
         properties={
-            "directory": types.Schema(
+            "working_directory": types.Schema(
                 type=types.Type.STRING,
-                description="Directory path to list files from, relative to the working directory (default is the working directory itself)",
+                description="Working directory path to run python files from",
             ),
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description="file path relative to the working directory."
+            ),
+            "args": types.Schema(
+                type=types.Type.ARRAY,
+                description="list of args to pass into python file.",
+                items=types.Schema(
+                    type=types.Type.STRING,
+                    description="arg item"
+                )
+            )
         },
     ),
 )
 
 def run_python_file(working_directory, file_path, args=None):
+    if working_directory == None or working_directory == "":
+        working_directory = "."
+
     try:
         working_dir_abs = os.path.abspath(working_directory)
         target_path = os.path.normpath(os.path.join(working_dir_abs, file_path))
